@@ -1,0 +1,25 @@
+# Composer
+vendor/
+composer.lock
+
+# Environment variables (secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# PHP
+*.cache
+.phpunit.result.cache
+

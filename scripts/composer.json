@@ -1,0 +1,20 @@
+{
+    "name": "intuit-developer/transactional-php-samples",
+    "description": "Sample PHP application demonstrating Mailchimp Transactional (Mandrill) API",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "mailchimp/transactional": "^1.0",
+        "vlucas/phpdotenv": "^5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "scripts/"
+        }
+    },
+    "scripts": {
+        "start": "php -S localhost:8000 -t public scripts/app.php"
+    },
+    "license": "MIT"
+}
+
