@@ -28,6 +28,7 @@
                     <option value="attachments">3. Send Email with Attachments</option>
                     <option value="templates">4. Send Email Using Template</option>
                     <option value="allInOne">5. Kitchen Sink - All Features</option>
+                    <option value="sms">📱 6. Send SMS Message</option>
                 </select>
             </div>
 
@@ -108,7 +109,33 @@
                 </div>
             </div>
 
-            <button type="submit" class="submit-btn">🚀 Generate Test Email</button>
+            <!-- SMS Input Fields -->
+            <div id="smsFields" class="conditional-fields" style="display: none;">
+                <h3>📱 SMS Message Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="smsToPhone">Recipient Phone Number (E.164 format):</label>
+                        <input type="tel" name="smsToPhone" id="smsToPhone" 
+                               placeholder="+1234567890"
+                               pattern="^\+[1-9]\d{1,14}$"
+                               title="Phone number in E.164 format (e.g., +1234567890)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="smsMessage">Message Text:</label>
+                    <textarea name="smsMessage" id="smsMessage" 
+                              placeholder="Enter your SMS message here (max 1600 characters)"
+                              maxlength="1600"
+                              rows="3"></textarea>
+                    <small><span id="smsCharCount">0</span>/1600 characters</small>
+                </div>
+                <div class="info-box">
+                    <p>ℹ️ <strong>Note:</strong> Phone numbers must be in E.164 format (e.g., +1234567890). SMS requires a verified sender phone number configured in your Mandrill account.</p>
+                    <p>📝 <strong>Consent:</strong> By default, messages are sent with 'onetime' consent type.</p>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">🚀 Generate Test Email</button>
         </form>
 
         <footer>
@@ -125,12 +152,14 @@
             mergeTags: 'Send an email with merge tags. Merge tags are placeholders in your email content that are replaced with dynamic data when the email is sent. You can use this script to send personalized emails to your recipients.',
             attachments: 'Send an email with attachments. Attachments can be added to your email by providing a URL to the file or by providing the file as a base64 encoded string. For simplicity, this demo uses a dynamic text file and sample attachments.',
             templates: 'Send an email with a template. Templates allow you to create reusable email layouts that can be populated with dynamic content. For this demo pre-defined email templates will be created and used.',
-            allInOne: 'Send an email with all the supported features. This comprehensive example demonstrates merge tags, attachments, tracking, metadata, and custom headers all in one email.'
+            allInOne: 'Send an email with all the supported features. This comprehensive example demonstrates merge tags, attachments, tracking, metadata, and custom headers all in one email.',
+            sms: 'Send an SMS to a single recipient. This script uses the Mailchimp Transactional API to send an SMS message. SMS messages require a verified sender phone number and recipient consent. You can specify the recipient phone number (E.164 format), message text, and consent type. This is useful for sending transactional SMS notifications like order confirmations, appointment reminders, or verification codes.'
         };
 
         function updateForm() {
             const select = document.getElementById('Script_name');
             const value = select.value;
+            const submitBtn = document.getElementById('submitBtn');
             
             // Update description
             document.getElementById('descriptionText').textContent = descriptions[value] || '';
@@ -139,6 +168,9 @@
             document.querySelectorAll('.conditional-fields').forEach(el => {
                 el.style.display = 'none';
             });
+            
+            // Reset button text
+            submitBtn.innerHTML = '🚀 Generate Test Email';
             
             // Show relevant fields
             switch(value) {
@@ -154,11 +186,32 @@
                 case 'allInOne':
                     document.getElementById('kitchenSinkInfo').style.display = 'block';
                     break;
+                case 'sms':
+                    document.getElementById('smsFields').style.display = 'block';
+                    submitBtn.innerHTML = '📱 Send Test SMS';
+                    break;
+            }
+        }
+        
+        // SMS character counter
+        function updateSmsCharCount() {
+            const textarea = document.getElementById('smsMessage');
+            const counter = document.getElementById('smsCharCount');
+            if (textarea && counter) {
+                counter.textContent = textarea.value.length;
             }
         }
 
         // Initialize on page load
-        document.addEventListener('DOMContentLoaded', updateForm);
+        document.addEventListener('DOMContentLoaded', function() {
+            updateForm();
+            
+            // Add SMS character counter listener
+            const smsTextarea = document.getElementById('smsMessage');
+            if (smsTextarea) {
+                smsTextarea.addEventListener('input', updateSmsCharCount);
+            }
+        });
     </script>
 </body>
 </html>

@@ -19,6 +19,7 @@ require_once __DIR__ . '/email_with_attachments.php';
 require_once __DIR__ . '/email_with_template.php';
 require_once __DIR__ . '/kitchen_sink_email.php';
 require_once __DIR__ . '/create_template.php';
+require_once __DIR__ . '/sms_single_recipient.php';
 
 // Start session for flash messages
 session_start();
@@ -60,17 +61,37 @@ if ($requestUri === '/' || $requestUri === '/index.php') {
         case 'allInOne':
             $result = sendKitchenSinkEmail();
             break;
+        case 'sms':
+            $toPhone = $_POST['smsToPhone'] ?? null;
+            $messageText = $_POST['smsMessage'] ?? null;
+            $result = sendSmsFromWeb($toPhone, $messageText);
+            break;
         default:
             $result = ['success' => false, 'error' => 'Unknown script type'];
     }
 
     if ($result['success']) {
-        $recipients = $result['result'] ?? [];
-        $statusLines = [];
-        foreach ($recipients as $r) {
-            $statusLines[] = "{$r['email']}: {$r['status']}";
+        if ($scriptName === 'sms') {
+            // Handle SMS result
+            $smsResult = $result['result'] ?? [];
+            if (is_array($smsResult) && isset($smsResult[0])) {
+                $firstResult = $smsResult[0];
+                $status = $firstResult['status'] ?? 'unknown';
+                $to = $firstResult['to'] ?? 'N/A';
+                $msgId = $firstResult['_id'] ?? 'N/A';
+                $statusMessage = "<div class='status-success'>✅ SMS sent successfully!<br>📱 Status: {$status}<br>To: {$to}<br>Message ID: {$msgId}</div>";
+            } else {
+                $statusMessage = "<div class='status-success'>✅ SMS sent successfully!</div>";
+            }
+        } else {
+            // Handle email result
+            $recipients = $result['result'] ?? [];
+            $statusLines = [];
+            foreach ($recipients as $r) {
+                $statusLines[] = "{$r['email']}: {$r['status']}";
+            }
+            $statusMessage = "<div class='status-success'>✅ Email sent successfully!<br>" . implode('<br>', $statusLines) . "</div>";
         }
-        $statusMessage = "<div class='status-success'>✅ Email sent successfully!<br>" . implode('<br>', $statusLines) . "</div>";
     } else {
         $error = $result['error'] ?? 'Unknown error';
         $statusMessage = "<div class='status-error'>❌ Error: {$error}</div>";
@@ -119,7 +140,8 @@ function getDescription(string $scriptType): string
         'mergeTags' => 'Send an email with merge tags. Merge tags are placeholders in your email content that are replaced with dynamic data when the email is sent. You can use this script to send personalized emails to your recipients.',
         'attachments' => 'Send an email with attachments. Attachments can be added to your email by providing a URL to the file or by providing the file as a base64 encoded string. For simplicity, this demo uses a dynamic text file and sample attachments.',
         'templates' => 'Send an email with a template. Templates allow you to create reusable email layouts that can be populated with dynamic content. For this demo pre-defined email templates will be created and used.',
-        'allInOne' => 'Send an email with all the supported features. This comprehensive example demonstrates merge tags, attachments, tracking, metadata, and custom headers all in one email.'
+        'allInOne' => 'Send an email with all the supported features. This comprehensive example demonstrates merge tags, attachments, tracking, metadata, and custom headers all in one email.',
+        'sms' => 'Send an SMS to a single recipient. This script uses the Mailchimp Transactional API to send an SMS message. SMS messages require a verified sender phone number and recipient consent. You can specify the recipient phone number (E.164 format), message text, and consent type. This is useful for sending transactional SMS notifications like order confirmations, appointment reminders, or verification codes.'
     ];
 
     return $descriptions[$scriptType] ?? '';

@@ -10,6 +10,7 @@ require_once __DIR__ . '/email_with_attachments.php';
 require_once __DIR__ . '/email_with_template.php';
 require_once __DIR__ . '/kitchen_sink_email.php';
 require_once __DIR__ . '/create_template.php';
+require_once __DIR__ . '/sms_single_recipient.php';
 
 // Start session for flash messages
 session_start();
@@ -76,20 +77,40 @@ if ($requestUri === '/testEmailbasedOnScriptID' && $requestMethod === 'POST') {
         case 'allInOne':
             $result = sendKitchenSinkEmail();
             break;
+        case 'sms':
+            $toPhone = $_POST['smsToPhone'] ?? null;
+            $messageText = $_POST['smsMessage'] ?? null;
+            $result = sendSmsFromWeb($toPhone, $messageText);
+            break;
         default:
             $result = ['success' => false, 'error' => 'Unknown script type'];
     }
 
     if ($result['success']) {
-        $recipients = $result['result'] ?? [];
-        $statusLines = [];
-        foreach ($recipients as $r) {
-            // PHP SDK returns objects, not arrays
-            $email = is_object($r) ? $r->email : $r['email'];
-            $status = is_object($r) ? $r->status : $r['status'];
-            $statusLines[] = "{$email}: {$status}";
+        if ($scriptName === 'sms') {
+            // Handle SMS result
+            $smsResult = $result['result'] ?? [];
+            if (is_array($smsResult) && isset($smsResult[0])) {
+                $firstResult = $smsResult[0];
+                $status = $firstResult['status'] ?? 'unknown';
+                $to = $firstResult['to'] ?? 'N/A';
+                $msgId = $firstResult['_id'] ?? 'N/A';
+                $statusMessage = "<div class='status-success'>✅ SMS sent successfully!<br>📱 Status: {$status}<br>To: {$to}<br>Message ID: {$msgId}</div>";
+            } else {
+                $statusMessage = "<div class='status-success'>✅ SMS sent successfully!</div>";
+            }
+        } else {
+            // Handle email result
+            $recipients = $result['result'] ?? [];
+            $statusLines = [];
+            foreach ($recipients as $r) {
+                // PHP SDK returns objects, not arrays
+                $email = is_object($r) ? $r->email : $r['email'];
+                $status = is_object($r) ? $r->status : $r['status'];
+                $statusLines[] = "{$email}: {$status}";
+            }
+            $statusMessage = "<div class='status-success'>✅ Email sent successfully!<br>" . implode('<br>', $statusLines) . "</div>";
         }
-        $statusMessage = "<div class='status-success'>✅ Email sent successfully!<br>" . implode('<br>', $statusLines) . "</div>";
     } else {
         $error = $result['error'] ?? 'Unknown error';
         $statusMessage = "<div class='status-error'>❌ Error: {$error}</div>";
