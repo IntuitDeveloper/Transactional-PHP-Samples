@@ -15,6 +15,6 @@
     "scripts": {
         "start": "php -S localhost:8000 -t public scripts/app.php"
     },
-    "license": "MIT"
+    "license": "Apache-2.0"
 }
 
